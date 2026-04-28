@@ -13,7 +13,10 @@ import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as BecomeInterviewerRouteImport } from './routes/become-interviewer'
+import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthedProfileRouteImport } from './routes/_authed/profile'
+import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -35,10 +38,24 @@ const BecomeInterviewerRoute = BecomeInterviewerRouteImport.update({
   path: '/become-interviewer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedProfileRoute = AuthedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -47,6 +64,8 @@ export interface FileRoutesByFullPath {
   '/how-it-works': typeof HowItWorksRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/dashboard': typeof AuthedDashboardRoute
+  '/profile': typeof AuthedProfileRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,14 +73,19 @@ export interface FileRoutesByTo {
   '/how-it-works': typeof HowItWorksRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/dashboard': typeof AuthedDashboardRoute
+  '/profile': typeof AuthedProfileRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authed': typeof AuthedRouteWithChildren
   '/become-interviewer': typeof BecomeInterviewerRoute
   '/how-it-works': typeof HowItWorksRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/_authed/dashboard': typeof AuthedDashboardRoute
+  '/_authed/profile': typeof AuthedProfileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -71,19 +95,32 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/sign-in'
     | '/sign-up'
+    | '/dashboard'
+    | '/profile'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/become-interviewer' | '/how-it-works' | '/sign-in' | '/sign-up'
-  id:
-    | '__root__'
+  to:
     | '/'
     | '/become-interviewer'
     | '/how-it-works'
     | '/sign-in'
     | '/sign-up'
+    | '/dashboard'
+    | '/profile'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authed'
+    | '/become-interviewer'
+    | '/how-it-works'
+    | '/sign-in'
+    | '/sign-up'
+    | '/_authed/dashboard'
+    | '/_authed/profile'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthedRoute: typeof AuthedRouteWithChildren
   BecomeInterviewerRoute: typeof BecomeInterviewerRoute
   HowItWorksRoute: typeof HowItWorksRoute
   SignInRoute: typeof SignInRoute
@@ -120,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BecomeInterviewerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed': {
+      id: '/_authed'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -127,11 +171,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/profile': {
+      id: '/_authed/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthedProfileRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/dashboard': {
+      id: '/_authed/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthedDashboardRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
+interface AuthedRouteChildren {
+  AuthedDashboardRoute: typeof AuthedDashboardRoute
+  AuthedProfileRoute: typeof AuthedProfileRoute
+}
+
+const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedDashboardRoute: AuthedDashboardRoute,
+  AuthedProfileRoute: AuthedProfileRoute,
+}
+
+const AuthedRouteWithChildren =
+  AuthedRoute._addFileChildren(AuthedRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthedRoute: AuthedRouteWithChildren,
   BecomeInterviewerRoute: BecomeInterviewerRoute,
   HowItWorksRoute: HowItWorksRoute,
   SignInRoute: SignInRoute,
