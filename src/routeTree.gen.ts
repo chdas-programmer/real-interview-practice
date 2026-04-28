@@ -9,38 +9,223 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as BecomeInterviewerRouteImport } from './routes/become-interviewer'
+import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as InterviewersIndexRouteImport } from './routes/interviewers.index'
+import { Route as InterviewersIdRouteImport } from './routes/interviewers.$id'
+import { Route as AuthedProfileRouteImport } from './routes/_authed/profile'
+import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedInterviewerIndexRouteImport } from './routes/_authed/interviewer.index'
+import { Route as AuthedInterviewerSetupRouteImport } from './routes/_authed/interviewer.setup'
+import { Route as AuthedBookingIdRouteImport } from './routes/_authed/booking.$id'
 
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowItWorksRoute = HowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BecomeInterviewerRoute = BecomeInterviewerRouteImport.update({
+  id: '/become-interviewer',
+  path: '/become-interviewer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InterviewersIndexRoute = InterviewersIndexRouteImport.update({
+  id: '/interviewers/',
+  path: '/interviewers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InterviewersIdRoute = InterviewersIdRouteImport.update({
+  id: '/interviewers/$id',
+  path: '/interviewers/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedProfileRoute = AuthedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedInterviewerIndexRoute = AuthedInterviewerIndexRouteImport.update({
+  id: '/interviewer/',
+  path: '/interviewer/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedInterviewerSetupRoute = AuthedInterviewerSetupRouteImport.update({
+  id: '/interviewer/setup',
+  path: '/interviewer/setup',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedBookingIdRoute = AuthedBookingIdRouteImport.update({
+  id: '/booking/$id',
+  path: '/booking/$id',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/become-interviewer': typeof BecomeInterviewerRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/dashboard': typeof AuthedDashboardRoute
+  '/profile': typeof AuthedProfileRoute
+  '/interviewers/$id': typeof InterviewersIdRoute
+  '/interviewers/': typeof InterviewersIndexRoute
+  '/booking/$id': typeof AuthedBookingIdRoute
+  '/interviewer/setup': typeof AuthedInterviewerSetupRoute
+  '/interviewer/': typeof AuthedInterviewerIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/become-interviewer': typeof BecomeInterviewerRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/dashboard': typeof AuthedDashboardRoute
+  '/profile': typeof AuthedProfileRoute
+  '/interviewers/$id': typeof InterviewersIdRoute
+  '/interviewers': typeof InterviewersIndexRoute
+  '/booking/$id': typeof AuthedBookingIdRoute
+  '/interviewer/setup': typeof AuthedInterviewerSetupRoute
+  '/interviewer': typeof AuthedInterviewerIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authed': typeof AuthedRouteWithChildren
+  '/become-interviewer': typeof BecomeInterviewerRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/_authed/dashboard': typeof AuthedDashboardRoute
+  '/_authed/profile': typeof AuthedProfileRoute
+  '/interviewers/$id': typeof InterviewersIdRoute
+  '/interviewers/': typeof InterviewersIndexRoute
+  '/_authed/booking/$id': typeof AuthedBookingIdRoute
+  '/_authed/interviewer/setup': typeof AuthedInterviewerSetupRoute
+  '/_authed/interviewer/': typeof AuthedInterviewerIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/become-interviewer'
+    | '/how-it-works'
+    | '/sign-in'
+    | '/sign-up'
+    | '/dashboard'
+    | '/profile'
+    | '/interviewers/$id'
+    | '/interviewers/'
+    | '/booking/$id'
+    | '/interviewer/setup'
+    | '/interviewer/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/become-interviewer'
+    | '/how-it-works'
+    | '/sign-in'
+    | '/sign-up'
+    | '/dashboard'
+    | '/profile'
+    | '/interviewers/$id'
+    | '/interviewers'
+    | '/booking/$id'
+    | '/interviewer/setup'
+    | '/interviewer'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authed'
+    | '/become-interviewer'
+    | '/how-it-works'
+    | '/sign-in'
+    | '/sign-up'
+    | '/_authed/dashboard'
+    | '/_authed/profile'
+    | '/interviewers/$id'
+    | '/interviewers/'
+    | '/_authed/booking/$id'
+    | '/_authed/interviewer/setup'
+    | '/_authed/interviewer/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthedRoute: typeof AuthedRouteWithChildren
+  BecomeInterviewerRoute: typeof BecomeInterviewerRoute
+  HowItWorksRoute: typeof HowItWorksRoute
+  SignInRoute: typeof SignInRoute
+  SignUpRoute: typeof SignUpRoute
+  InterviewersIdRoute: typeof InterviewersIdRoute
+  InterviewersIndexRoute: typeof InterviewersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-it-works': {
+      id: '/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/how-it-works'
+      preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/become-interviewer': {
+      id: '/become-interviewer'
+      path: '/become-interviewer'
+      fullPath: '/become-interviewer'
+      preLoaderRoute: typeof BecomeInterviewerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authed': {
+      id: '/_authed'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,21 +233,87 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/interviewers/': {
+      id: '/interviewers/'
+      path: '/interviewers'
+      fullPath: '/interviewers/'
+      preLoaderRoute: typeof InterviewersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/interviewers/$id': {
+      id: '/interviewers/$id'
+      path: '/interviewers/$id'
+      fullPath: '/interviewers/$id'
+      preLoaderRoute: typeof InterviewersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authed/profile': {
+      id: '/_authed/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthedProfileRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/dashboard': {
+      id: '/_authed/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthedDashboardRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/interviewer/': {
+      id: '/_authed/interviewer/'
+      path: '/interviewer'
+      fullPath: '/interviewer/'
+      preLoaderRoute: typeof AuthedInterviewerIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/interviewer/setup': {
+      id: '/_authed/interviewer/setup'
+      path: '/interviewer/setup'
+      fullPath: '/interviewer/setup'
+      preLoaderRoute: typeof AuthedInterviewerSetupRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/booking/$id': {
+      id: '/_authed/booking/$id'
+      path: '/booking/$id'
+      fullPath: '/booking/$id'
+      preLoaderRoute: typeof AuthedBookingIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
+interface AuthedRouteChildren {
+  AuthedDashboardRoute: typeof AuthedDashboardRoute
+  AuthedProfileRoute: typeof AuthedProfileRoute
+  AuthedBookingIdRoute: typeof AuthedBookingIdRoute
+  AuthedInterviewerSetupRoute: typeof AuthedInterviewerSetupRoute
+  AuthedInterviewerIndexRoute: typeof AuthedInterviewerIndexRoute
+}
+
+const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedDashboardRoute: AuthedDashboardRoute,
+  AuthedProfileRoute: AuthedProfileRoute,
+  AuthedBookingIdRoute: AuthedBookingIdRoute,
+  AuthedInterviewerSetupRoute: AuthedInterviewerSetupRoute,
+  AuthedInterviewerIndexRoute: AuthedInterviewerIndexRoute,
+}
+
+const AuthedRouteWithChildren =
+  AuthedRoute._addFileChildren(AuthedRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthedRoute: AuthedRouteWithChildren,
+  BecomeInterviewerRoute: BecomeInterviewerRoute,
+  HowItWorksRoute: HowItWorksRoute,
+  SignInRoute: SignInRoute,
+  SignUpRoute: SignUpRoute,
+  InterviewersIdRoute: InterviewersIdRoute,
+  InterviewersIndexRoute: InterviewersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
