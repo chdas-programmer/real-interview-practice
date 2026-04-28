@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShieldCheck } from "lucide-react";
 
-export const Route = createFileRoute("/interviewers")({
+export const Route = createFileRoute("/interviewers/")({
   head: () => ({
     meta: [
       { title: "Browse interviewers — RealMock" },
@@ -153,5 +153,5 @@ function InterviewerCard({ i }: { i: Interviewer }) {
         </Button>
       </div>
     </Card>
-  );
+  )
 }

@@ -15,8 +15,11 @@ import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as BecomeInterviewerRouteImport } from './routes/become-interviewer'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as InterviewersIndexRouteImport } from './routes/interviewers.index'
 import { Route as AuthedProfileRouteImport } from './routes/_authed/profile'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedInterviewerIndexRouteImport } from './routes/_authed/interviewer.index'
+import { Route as AuthedInterviewerSetupRouteImport } from './routes/_authed/interviewer.setup'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -47,6 +50,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InterviewersIndexRoute = InterviewersIndexRouteImport.update({
+  id: '/interviewers/',
+  path: '/interviewers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedProfileRoute = AuthedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -55,6 +63,16 @@ const AuthedProfileRoute = AuthedProfileRouteImport.update({
 const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedInterviewerIndexRoute = AuthedInterviewerIndexRouteImport.update({
+  id: '/interviewer/',
+  path: '/interviewer/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedInterviewerSetupRoute = AuthedInterviewerSetupRouteImport.update({
+  id: '/interviewer/setup',
+  path: '/interviewer/setup',
   getParentRoute: () => AuthedRoute,
 } as any)
 
@@ -66,6 +84,9 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/profile': typeof AuthedProfileRoute
+  '/interviewers/': typeof InterviewersIndexRoute
+  '/interviewer/setup': typeof AuthedInterviewerSetupRoute
+  '/interviewer/': typeof AuthedInterviewerIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -75,6 +96,9 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/profile': typeof AuthedProfileRoute
+  '/interviewers': typeof InterviewersIndexRoute
+  '/interviewer/setup': typeof AuthedInterviewerSetupRoute
+  '/interviewer': typeof AuthedInterviewerIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,6 +110,9 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/profile': typeof AuthedProfileRoute
+  '/interviewers/': typeof InterviewersIndexRoute
+  '/_authed/interviewer/setup': typeof AuthedInterviewerSetupRoute
+  '/_authed/interviewer/': typeof AuthedInterviewerIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,6 +124,9 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/dashboard'
     | '/profile'
+    | '/interviewers/'
+    | '/interviewer/setup'
+    | '/interviewer/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -106,6 +136,9 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/dashboard'
     | '/profile'
+    | '/interviewers'
+    | '/interviewer/setup'
+    | '/interviewer'
   id:
     | '__root__'
     | '/'
@@ -116,6 +149,9 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/_authed/dashboard'
     | '/_authed/profile'
+    | '/interviewers/'
+    | '/_authed/interviewer/setup'
+    | '/_authed/interviewer/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -125,6 +161,7 @@ export interface RootRouteChildren {
   HowItWorksRoute: typeof HowItWorksRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  InterviewersIndexRoute: typeof InterviewersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -171,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/interviewers/': {
+      id: '/interviewers/'
+      path: '/interviewers'
+      fullPath: '/interviewers/'
+      preLoaderRoute: typeof InterviewersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed/profile': {
       id: '/_authed/profile'
       path: '/profile'
@@ -185,17 +229,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDashboardRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/interviewer/': {
+      id: '/_authed/interviewer/'
+      path: '/interviewer'
+      fullPath: '/interviewer/'
+      preLoaderRoute: typeof AuthedInterviewerIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/interviewer/setup': {
+      id: '/_authed/interviewer/setup'
+      path: '/interviewer/setup'
+      fullPath: '/interviewer/setup'
+      preLoaderRoute: typeof AuthedInterviewerSetupRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
 interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedProfileRoute: typeof AuthedProfileRoute
+  AuthedInterviewerSetupRoute: typeof AuthedInterviewerSetupRoute
+  AuthedInterviewerIndexRoute: typeof AuthedInterviewerIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedProfileRoute: AuthedProfileRoute,
+  AuthedInterviewerSetupRoute: AuthedInterviewerSetupRoute,
+  AuthedInterviewerIndexRoute: AuthedInterviewerIndexRoute,
 }
 
 const AuthedRouteWithChildren =
@@ -208,6 +270,7 @@ const rootRouteChildren: RootRouteChildren = {
   HowItWorksRoute: HowItWorksRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  InterviewersIndexRoute: InterviewersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
