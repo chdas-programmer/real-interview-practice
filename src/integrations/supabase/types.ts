@@ -14,16 +14,284 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      availability_slots: {
+        Row: {
+          created_at: string
+          end_at: string
+          id: string
+          interviewer_id: string
+          is_booked: boolean
+          start_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_at: string
+          id?: string
+          interviewer_id: string
+          is_booked?: boolean
+          start_at: string
+        }
+        Update: {
+          created_at?: string
+          end_at?: string
+          id?: string
+          interviewer_id?: string
+          is_booked?: boolean
+          start_at?: string
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          cancellation_reason: string | null
+          candidate_id: string
+          candidate_notes: string | null
+          created_at: string
+          duration_minutes: number
+          id: string
+          interview_type: Database["public"]["Enums"]["interview_type"]
+          interviewer_id: string
+          meeting_link: string | null
+          price_cents: number
+          scheduled_at: string
+          slot_id: string | null
+          status: Database["public"]["Enums"]["booking_status"]
+          updated_at: string
+        }
+        Insert: {
+          cancellation_reason?: string | null
+          candidate_id: string
+          candidate_notes?: string | null
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          interview_type: Database["public"]["Enums"]["interview_type"]
+          interviewer_id: string
+          meeting_link?: string | null
+          price_cents?: number
+          scheduled_at: string
+          slot_id?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+        }
+        Update: {
+          cancellation_reason?: string | null
+          candidate_id?: string
+          candidate_notes?: string | null
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          interview_type?: Database["public"]["Enums"]["interview_type"]
+          interviewer_id?: string
+          meeting_link?: string | null
+          price_cents?: number
+          scheduled_at?: string
+          slot_id?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "availability_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidate_profiles: {
+        Row: {
+          created_at: string
+          experience_level:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
+          resume_url: string | null
+          skills: string[] | null
+          target_companies: string[] | null
+          target_company_tier:
+            | Database["public"]["Enums"]["company_tier"]
+            | null
+          target_role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          experience_level?:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
+          resume_url?: string | null
+          skills?: string[] | null
+          target_companies?: string[] | null
+          target_company_tier?:
+            | Database["public"]["Enums"]["company_tier"]
+            | null
+          target_role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          experience_level?:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
+          resume_url?: string | null
+          skills?: string[] | null
+          target_companies?: string[] | null
+          target_company_tier?:
+            | Database["public"]["Enums"]["company_tier"]
+            | null
+          target_role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      interviewer_profiles: {
+        Row: {
+          accepts_resume_reviews: boolean
+          bio: string | null
+          company: string
+          company_tier: Database["public"]["Enums"]["company_tier"]
+          created_at: string
+          experience_level: Database["public"]["Enums"]["experience_level"]
+          expertise: Database["public"]["Enums"]["interview_type"][]
+          hourly_rate: number
+          job_role: string
+          linkedin_url: string | null
+          updated_at: string
+          user_id: string
+          verification_notes: string | null
+          verification_status: Database["public"]["Enums"]["verification_status"]
+          years_experience: number
+        }
+        Insert: {
+          accepts_resume_reviews?: boolean
+          bio?: string | null
+          company: string
+          company_tier?: Database["public"]["Enums"]["company_tier"]
+          created_at?: string
+          experience_level?: Database["public"]["Enums"]["experience_level"]
+          expertise?: Database["public"]["Enums"]["interview_type"][]
+          hourly_rate?: number
+          job_role: string
+          linkedin_url?: string | null
+          updated_at?: string
+          user_id: string
+          verification_notes?: string | null
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+          years_experience?: number
+        }
+        Update: {
+          accepts_resume_reviews?: boolean
+          bio?: string | null
+          company?: string
+          company_tier?: Database["public"]["Enums"]["company_tier"]
+          created_at?: string
+          experience_level?: Database["public"]["Enums"]["experience_level"]
+          expertise?: Database["public"]["Enums"]["interview_type"][]
+          hourly_rate?: number
+          job_role?: string
+          linkedin_url?: string | null
+          updated_at?: string
+          user_id?: string
+          verification_notes?: string | null
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+          years_experience?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          headline: string | null
+          id: string
+          referral_code: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          headline?: string | null
+          id: string
+          referral_code?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          headline?: string | null
+          id?: string
+          referral_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "candidate" | "interviewer" | "admin"
+      booking_status:
+        | "pending_confirmation"
+        | "confirmed"
+        | "completed"
+        | "cancelled"
+        | "no_show"
+      company_tier: "product_based" | "service_based" | "startup" | "other"
+      experience_level:
+        | "entry"
+        | "junior"
+        | "mid"
+        | "senior"
+        | "staff"
+        | "principal"
+      interview_type:
+        | "dsa"
+        | "system_design"
+        | "frontend"
+        | "backend"
+        | "ml"
+        | "behavioral"
+        | "hr"
+        | "pm"
+      verification_status: "pending" | "verified" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +418,35 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["candidate", "interviewer", "admin"],
+      booking_status: [
+        "pending_confirmation",
+        "confirmed",
+        "completed",
+        "cancelled",
+        "no_show",
+      ],
+      company_tier: ["product_based", "service_based", "startup", "other"],
+      experience_level: [
+        "entry",
+        "junior",
+        "mid",
+        "senior",
+        "staff",
+        "principal",
+      ],
+      interview_type: [
+        "dsa",
+        "system_design",
+        "frontend",
+        "backend",
+        "ml",
+        "behavioral",
+        "hr",
+        "pm",
+      ],
+      verification_status: ["pending", "verified", "rejected"],
+    },
   },
 } as const
