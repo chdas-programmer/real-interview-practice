@@ -119,6 +119,18 @@ function DashboardPage() {
           </div>
         </div>
 
+        {noAdminsExist && !isAdmin && (
+          <Card className="mt-6 p-5 border-[color:var(--accent-warm)]/40 bg-[color:var(--accent-warm)]/5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="font-medium">No admin yet</div>
+              <p className="text-sm text-[color:var(--ink-soft)]">
+                Claim the admin role for this workspace. Available only because no admin exists.
+              </p>
+            </div>
+            <Button onClick={claimAdmin} className="rounded-full">Claim admin</Button>
+          </Card>
+        )}
+
         <section className="mt-10">
           <h2 className="font-serif text-2xl font-bold mb-4">Upcoming</h2>
           {loadingData ? (
