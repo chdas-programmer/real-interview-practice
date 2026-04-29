@@ -42,7 +42,7 @@ export function SiteHeader() {
               </Button>
               {roles.includes("admin") && (
                 <Button asChild size="sm" variant="ghost" className="rounded-full">
-                  <Link to="/admin">Admin</Link>
+                  <a href="/admin">Admin</a>
                 </Button>
               )}
             </>
