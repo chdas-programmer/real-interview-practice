@@ -27,12 +27,32 @@ type Booking = {
 };
 
 function DashboardPage() {
-  const { user, roles, loading } = useAuth();
+  const { user, roles, loading, refreshRoles } = useAuth();
   const isInterviewer = roles.includes("interviewer");
   const isCandidate = roles.includes("candidate");
+  const isAdmin = roles.includes("admin");
   const [upcoming, setUpcoming] = useState<Booking[]>([]);
   const [past, setPast] = useState<Booking[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [noAdminsExist, setNoAdminsExist] = useState(false);
+
+  useEffect(() => {
+    if (isAdmin) { setNoAdminsExist(false); return; }
+    (async () => {
+      const { count } = await supabase
+        .from("user_roles")
+        .select("user_id", { count: "exact", head: true })
+        .eq("role", "admin");
+      setNoAdminsExist((count ?? 0) === 0);
+    })();
+  }, [isAdmin]);
+
+  const claimAdmin = async () => {
+    const { error } = await supabase.rpc("bootstrap_first_admin");
+    if (error) return toast.error(error.message);
+    toast.success("You are now admin");
+    await refreshRoles();
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -98,6 +118,18 @@ function DashboardPage() {
             )}
           </div>
         </div>
+
+        {noAdminsExist && !isAdmin && (
+          <Card className="mt-6 p-5 border-[color:var(--accent-warm)]/40 bg-[color:var(--accent-warm)]/5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="font-medium">No admin yet</div>
+              <p className="text-sm text-[color:var(--ink-soft)]">
+                Claim the admin role for this workspace. Available only because no admin exists.
+              </p>
+            </div>
+            <Button onClick={claimAdmin} className="rounded-full">Claim admin</Button>
+          </Card>
+        )}
 
         <section className="mt-10">
           <h2 className="font-serif text-2xl font-bold mb-4">Upcoming</h2>
