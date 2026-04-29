@@ -27,12 +27,32 @@ type Booking = {
 };
 
 function DashboardPage() {
-  const { user, roles, loading } = useAuth();
+  const { user, roles, loading, refreshRoles } = useAuth();
   const isInterviewer = roles.includes("interviewer");
   const isCandidate = roles.includes("candidate");
+  const isAdmin = roles.includes("admin");
   const [upcoming, setUpcoming] = useState<Booking[]>([]);
   const [past, setPast] = useState<Booking[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [noAdminsExist, setNoAdminsExist] = useState(false);
+
+  useEffect(() => {
+    if (isAdmin) { setNoAdminsExist(false); return; }
+    (async () => {
+      const { count } = await supabase
+        .from("user_roles")
+        .select("user_id", { count: "exact", head: true })
+        .eq("role", "admin");
+      setNoAdminsExist((count ?? 0) === 0);
+    })();
+  }, [isAdmin]);
+
+  const claimAdmin = async () => {
+    const { error } = await supabase.rpc("bootstrap_first_admin");
+    if (error) return toast.error(error.message);
+    toast.success("You are now admin");
+    await refreshRoles();
+  };
 
   useEffect(() => {
     if (!user) return;
