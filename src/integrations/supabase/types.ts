@@ -275,6 +275,8 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "no_show"
+        | "ongoing"
+        | "missed"
       company_tier: "product_based" | "service_based" | "startup" | "other"
       experience_level:
         | "entry"
@@ -427,6 +429,8 @@ export const Constants = {
         "completed",
         "cancelled",
         "no_show",
+        "ongoing",
+        "missed",
       ],
       company_tier: ["product_based", "service_based", "startup", "other"],
       experience_level: [
