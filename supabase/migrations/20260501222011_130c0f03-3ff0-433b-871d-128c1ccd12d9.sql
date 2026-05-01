@@ -1,0 +1,1 @@
+ALTER VIEW public.interviewer_ratings SET (security_invoker = true);
