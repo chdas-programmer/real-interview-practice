@@ -66,6 +66,7 @@ function InterviewerDetail() {
       slot_id: slot.id,
       interview_type: type as never,
       scheduled_at: slot.start_at,
+      end_at: slot.end_at,
       duration_minutes: duration,
       candidate_notes: notes || null,
       price_cents: Math.round((profile?.hourly_rate ?? 0) * (duration / 60)),
