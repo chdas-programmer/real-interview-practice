@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShieldCheck } from "lucide-react";
+import { StarRating } from "@/components/star-rating";
 
 export const Route = createFileRoute("/interviewers/$id")({
   head: () => ({ meta: [{ title: "Interviewer profile — RealMock" }] }),
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/interviewers/$id")({
 });
 
 type Slot = { id: string; start_at: string; end_at: string; is_booked: boolean };
+type Review = { id: string; rating: number; feedback: string | null; reviewer_id: string; created_at: string; reviewer_name?: string };
 
 function InterviewerDetail() {
   const { id } = Route.useParams();
@@ -30,18 +32,40 @@ function InterviewerDetail() {
   const [type, setType] = useState("dsa");
   const [notes, setNotes] = useState("");
   const [booking, setBooking] = useState(false);
+  const [stats, setStats] = useState<{ avg: number; count: number; completed: number }>({ avg: 0, count: 0, completed: 0 });
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   useEffect(() => {
     (async () => {
-      const [{ data: ip }, { data: prof }, { data: s }] = await Promise.all([
+      const [{ data: ip }, { data: prof }, { data: s }, { data: rv }, { count: completedCount }] = await Promise.all([
         supabase.from("interviewer_profiles").select("*").eq("user_id", id).maybeSingle(),
         supabase.from("profiles").select("full_name, headline").eq("id", id).maybeSingle(),
         supabase.from("availability_slots").select("*").eq("interviewer_id", id).eq("is_booked", false).order("start_at"),
+        supabase.from("reviews").select("id, rating, feedback, reviewer_id, created_at").eq("reviewee_id", id).order("created_at", { ascending: false }).limit(5),
+        supabase.from("bookings").select("id", { count: "exact", head: true }).eq("interviewer_id", id).eq("status", "completed"),
       ]);
       setProfile({ ...ip, full_name: prof?.full_name, headline: prof?.headline });
       setSlots((s ?? []).filter((x) => new Date(x.start_at).getTime() > Date.now()));
+
+      const reviewerIds = Array.from(new Set((rv ?? []).map((r) => r.reviewer_id)));
+      const { data: rprofs } = reviewerIds.length
+        ? await supabase.from("profiles").select("id, full_name").in("id", reviewerIds)
+        : { data: [] as { id: string; full_name: string | null }[] };
+      const nameMap = new Map((rprofs ?? []).map((p) => [p.id, p.full_name ?? "Anonymous"]));
+      const enriched = (rv ?? []).map((r) => ({ ...r, reviewer_name: nameMap.get(r.reviewer_id) }));
+      setReviews(enriched);
+
+      const ratings = (rv ?? []).map((r) => r.rating);
+      const avg = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
+      // total review count from a separate query for accuracy
+      const { count: totalReviews } = await supabase
+        .from("reviews")
+        .select("id", { count: "exact", head: true })
+        .eq("reviewee_id", id);
+      setStats({ avg, count: totalReviews ?? 0, completed: completedCount ?? 0 });
     })();
   }, [id]);
+
 
   const book = async () => {
     if (!user) {
@@ -107,13 +131,43 @@ function InterviewerDetail() {
             </div>
             <h1 className="font-serif text-4xl md:text-5xl font-bold">{profile.full_name}</h1>
             <p className="mt-2 text-[color:var(--ink-soft)] text-lg">{profile.job_role} @ {profile.company} · {profile.years_experience}+ yrs</p>
+            <div className="mt-4 flex items-center gap-4 flex-wrap">
+              {stats.count > 0 && (
+                <div className="flex items-center gap-2">
+                  <StarRating value={Math.round(stats.avg)} readOnly size={16} />
+                  <span className="text-sm font-medium">{stats.avg.toFixed(1)}</span>
+                  <span className="text-sm text-[color:var(--ink-soft)]">({stats.count} reviews)</span>
+                </div>
+              )}
+              {stats.completed > 0 && (
+                <span className="text-sm text-[color:var(--ink-soft)]">· {stats.completed} interviews completed</span>
+              )}
+            </div>
             {profile.bio && <p className="mt-6 leading-relaxed">{profile.bio}</p>}
             <div className="mt-6 flex flex-wrap gap-2">
               {(profile.expertise as string[]).map((e) => (
                 <Badge key={e} variant="secondary" className="rounded-full capitalize">{e.replace(/_/g, " ")}</Badge>
               ))}
             </div>
+
+            {reviews.length > 0 && (
+              <div className="mt-10">
+                <h2 className="font-serif text-2xl font-bold">Recent reviews</h2>
+                <div className="mt-4 space-y-3">
+                  {reviews.map((r) => (
+                    <Card key={r.id} className="p-5">
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium text-sm">{r.reviewer_name}</div>
+                        <StarRating value={r.rating} readOnly size={14} />
+                      </div>
+                      {r.feedback && <p className="mt-2 text-sm text-[color:var(--ink-soft)]">{r.feedback}</p>}
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+
 
           <Card className="p-6 h-fit lg:sticky lg:top-24">
             <div className="font-serif text-2xl font-bold">${(profile.hourly_rate / 100).toFixed(0)}<span className="text-sm font-sans font-normal text-[color:var(--ink-soft)]">/hr</span></div>

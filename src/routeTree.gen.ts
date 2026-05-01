@@ -21,8 +21,11 @@ import { Route as AuthedProfileRouteImport } from './routes/_authed/profile'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedAdminRouteImport } from './routes/_authed/admin'
 import { Route as AuthedInterviewerIndexRouteImport } from './routes/_authed/interviewer.index'
+import { Route as AuthedMeetingIdRouteImport } from './routes/_authed/meeting.$id'
 import { Route as AuthedInterviewerSetupRouteImport } from './routes/_authed/interviewer.setup'
 import { Route as AuthedBookingIdRouteImport } from './routes/_authed/booking.$id'
+import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/public/webhooks/razorpay'
+import { Route as ApiPublicHooksBookingTickRouteImport } from './routes/api/public/hooks/booking-tick'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -83,6 +86,11 @@ const AuthedInterviewerIndexRoute = AuthedInterviewerIndexRouteImport.update({
   path: '/interviewer/',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedMeetingIdRoute = AuthedMeetingIdRouteImport.update({
+  id: '/meeting/$id',
+  path: '/meeting/$id',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedInterviewerSetupRoute = AuthedInterviewerSetupRouteImport.update({
   id: '/interviewer/setup',
   path: '/interviewer/setup',
@@ -93,6 +101,18 @@ const AuthedBookingIdRoute = AuthedBookingIdRouteImport.update({
   path: '/booking/$id',
   getParentRoute: () => AuthedRoute,
 } as any)
+const ApiPublicWebhooksRazorpayRoute =
+  ApiPublicWebhooksRazorpayRouteImport.update({
+    id: '/api/public/webhooks/razorpay',
+    path: '/api/public/webhooks/razorpay',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksBookingTickRoute =
+  ApiPublicHooksBookingTickRouteImport.update({
+    id: '/api/public/hooks/booking-tick',
+    path: '/api/public/hooks/booking-tick',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -107,7 +127,10 @@ export interface FileRoutesByFullPath {
   '/interviewers/': typeof InterviewersIndexRoute
   '/booking/$id': typeof AuthedBookingIdRoute
   '/interviewer/setup': typeof AuthedInterviewerSetupRoute
+  '/meeting/$id': typeof AuthedMeetingIdRoute
   '/interviewer/': typeof AuthedInterviewerIndexRoute
+  '/api/public/hooks/booking-tick': typeof ApiPublicHooksBookingTickRoute
+  '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -122,7 +145,10 @@ export interface FileRoutesByTo {
   '/interviewers': typeof InterviewersIndexRoute
   '/booking/$id': typeof AuthedBookingIdRoute
   '/interviewer/setup': typeof AuthedInterviewerSetupRoute
+  '/meeting/$id': typeof AuthedMeetingIdRoute
   '/interviewer': typeof AuthedInterviewerIndexRoute
+  '/api/public/hooks/booking-tick': typeof ApiPublicHooksBookingTickRoute
+  '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -139,7 +165,10 @@ export interface FileRoutesById {
   '/interviewers/': typeof InterviewersIndexRoute
   '/_authed/booking/$id': typeof AuthedBookingIdRoute
   '/_authed/interviewer/setup': typeof AuthedInterviewerSetupRoute
+  '/_authed/meeting/$id': typeof AuthedMeetingIdRoute
   '/_authed/interviewer/': typeof AuthedInterviewerIndexRoute
+  '/api/public/hooks/booking-tick': typeof ApiPublicHooksBookingTickRoute
+  '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -156,7 +185,10 @@ export interface FileRouteTypes {
     | '/interviewers/'
     | '/booking/$id'
     | '/interviewer/setup'
+    | '/meeting/$id'
     | '/interviewer/'
+    | '/api/public/hooks/booking-tick'
+    | '/api/public/webhooks/razorpay'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -171,7 +203,10 @@ export interface FileRouteTypes {
     | '/interviewers'
     | '/booking/$id'
     | '/interviewer/setup'
+    | '/meeting/$id'
     | '/interviewer'
+    | '/api/public/hooks/booking-tick'
+    | '/api/public/webhooks/razorpay'
   id:
     | '__root__'
     | '/'
@@ -187,7 +222,10 @@ export interface FileRouteTypes {
     | '/interviewers/'
     | '/_authed/booking/$id'
     | '/_authed/interviewer/setup'
+    | '/_authed/meeting/$id'
     | '/_authed/interviewer/'
+    | '/api/public/hooks/booking-tick'
+    | '/api/public/webhooks/razorpay'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -199,6 +237,8 @@ export interface RootRouteChildren {
   SignUpRoute: typeof SignUpRoute
   InterviewersIdRoute: typeof InterviewersIdRoute
   InterviewersIndexRoute: typeof InterviewersIndexRoute
+  ApiPublicHooksBookingTickRoute: typeof ApiPublicHooksBookingTickRoute
+  ApiPublicWebhooksRazorpayRoute: typeof ApiPublicWebhooksRazorpayRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -287,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedInterviewerIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/meeting/$id': {
+      id: '/_authed/meeting/$id'
+      path: '/meeting/$id'
+      fullPath: '/meeting/$id'
+      preLoaderRoute: typeof AuthedMeetingIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/interviewer/setup': {
       id: '/_authed/interviewer/setup'
       path: '/interviewer/setup'
@@ -301,6 +348,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedBookingIdRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/api/public/webhooks/razorpay': {
+      id: '/api/public/webhooks/razorpay'
+      path: '/api/public/webhooks/razorpay'
+      fullPath: '/api/public/webhooks/razorpay'
+      preLoaderRoute: typeof ApiPublicWebhooksRazorpayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/booking-tick': {
+      id: '/api/public/hooks/booking-tick'
+      path: '/api/public/hooks/booking-tick'
+      fullPath: '/api/public/hooks/booking-tick'
+      preLoaderRoute: typeof ApiPublicHooksBookingTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -310,6 +371,7 @@ interface AuthedRouteChildren {
   AuthedProfileRoute: typeof AuthedProfileRoute
   AuthedBookingIdRoute: typeof AuthedBookingIdRoute
   AuthedInterviewerSetupRoute: typeof AuthedInterviewerSetupRoute
+  AuthedMeetingIdRoute: typeof AuthedMeetingIdRoute
   AuthedInterviewerIndexRoute: typeof AuthedInterviewerIndexRoute
 }
 
@@ -319,6 +381,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedProfileRoute: AuthedProfileRoute,
   AuthedBookingIdRoute: AuthedBookingIdRoute,
   AuthedInterviewerSetupRoute: AuthedInterviewerSetupRoute,
+  AuthedMeetingIdRoute: AuthedMeetingIdRoute,
   AuthedInterviewerIndexRoute: AuthedInterviewerIndexRoute,
 }
 
@@ -334,16 +397,9 @@ const rootRouteChildren: RootRouteChildren = {
   SignUpRoute: SignUpRoute,
   InterviewersIdRoute: InterviewersIdRoute,
   InterviewersIndexRoute: InterviewersIndexRoute,
+  ApiPublicHooksBookingTickRoute: ApiPublicHooksBookingTickRoute,
+  ApiPublicWebhooksRazorpayRoute: ApiPublicWebhooksRazorpayRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
