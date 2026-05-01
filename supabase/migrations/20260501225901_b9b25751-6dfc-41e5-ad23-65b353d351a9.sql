@@ -1,0 +1,1 @@
+ALTER TABLE public.bookings RENAME COLUMN dyte_meeting_id TO daily_room_url;

@@ -48,8 +48,8 @@ export type Database = {
           candidate_joined_at: string | null
           candidate_notes: string | null
           created_at: string
+          daily_room_url: string | null
           duration_minutes: number
-          dyte_meeting_id: string | null
           end_at: string
           id: string
           interview_type: Database["public"]["Enums"]["interview_type"]
@@ -71,8 +71,8 @@ export type Database = {
           candidate_joined_at?: string | null
           candidate_notes?: string | null
           created_at?: string
+          daily_room_url?: string | null
           duration_minutes?: number
-          dyte_meeting_id?: string | null
           end_at: string
           id?: string
           interview_type: Database["public"]["Enums"]["interview_type"]
@@ -94,8 +94,8 @@ export type Database = {
           candidate_joined_at?: string | null
           candidate_notes?: string | null
           created_at?: string
+          daily_room_url?: string | null
           duration_minutes?: number
-          dyte_meeting_id?: string | null
           end_at?: string
           id?: string
           interview_type?: Database["public"]["Enums"]["interview_type"]
