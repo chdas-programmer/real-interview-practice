@@ -1,148 +1,229 @@
 
-# RealMock — Real human mock interviews
+# Mock Interview Platform — Major Upgrade
 
-> "You learn anywhere. We test you in reality."
-
-A platform where serious candidates book mock interviews with verified professionals from product-based companies. No courses, no AI, no peers. Interviews happen on external links (Zoom/Meet) pasted by the interviewer at confirmation.
+Replacing meeting-link flow with **Dyte video**, adding **Razorpay payments** with free-session logic, **reviews**, **no-show cron**, and **UI polish**. Building on existing `bookings` table (renaming/aliasing concepts rather than replacing — preserves data).
 
 ---
 
-## Visual & UX direction
+## 1. Database Schema Changes (one migration)
 
-- **Aesthetic:** Warm Professional (selected). Stone/cream background, serif headlines with italic accent, orange (`#C2410C`) as primary action color, sans-serif body, rounded-full buttons.
-- **Tone:** Serious, trust-first, editorial. No flashy gradients, no animated hero blobs.
-- **Trust signals everywhere:** verified badge, company name + role on every interviewer card, hire/no-hire verdicts, real feedback excerpts.
+Extending `bookings` instead of creating a parallel `sessions` table — cleaner and preserves existing rows.
 
----
+```sql
+-- bookings: add Dyte + payment + no-show fields
+ALTER TABLE public.bookings
+  ADD COLUMN dyte_meeting_id text,
+  ADD COLUMN end_at timestamptz,                       -- backfilled from scheduled_at + duration
+  ADD COLUMN payment_status text NOT NULL DEFAULT 'pending'
+    CHECK (payment_status IN ('pending','paid','refunded','free')),
+  ADD COLUMN razorpay_order_id text,
+  ADD COLUMN razorpay_payment_id text,
+  ADD COLUMN candidate_joined_at timestamptz,
+  ADD COLUMN interviewer_joined_at timestamptz;
 
-## User roles
+-- backfill end_at, then enforce NOT NULL
+UPDATE public.bookings SET end_at = scheduled_at + (duration_minutes || ' minutes')::interval WHERE end_at IS NULL;
+ALTER TABLE public.bookings ALTER COLUMN end_at SET NOT NULL;
 
-1. **Candidate** — books interviews, uploads resume, gets feedback.
-2. **Interviewer** — verified pro, sets availability, conducts, gives feedback.
-3. **Admin** — verifies interviewers, moderates, handles payouts & abuse.
+-- extend booking_status enum: ongoing, missed
+ALTER TYPE booking_status ADD VALUE IF NOT EXISTS 'ongoing';
+ALTER TYPE booking_status ADD VALUE IF NOT EXISTS 'missed';
 
-A single account can opt to apply as interviewer (becomes pending until admin approves).
+-- free-session tracking
+ALTER TABLE public.candidate_profiles ADD COLUMN free_session_used boolean NOT NULL DEFAULT false;
+ALTER TABLE public.interviewer_profiles ADD COLUMN free_session_used boolean NOT NULL DEFAULT false;
 
----
+-- reviews
+CREATE TABLE public.reviews (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  booking_id uuid NOT NULL REFERENCES public.bookings(id) ON DELETE CASCADE,
+  reviewer_id uuid NOT NULL,
+  reviewee_id uuid NOT NULL,
+  rating int NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  feedback text CHECK (char_length(feedback) <= 2000),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (booking_id, reviewer_id)
+);
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+-- Policies: SELECT public; INSERT only by participant of a 'completed' booking; no UPDATE/DELETE except admin.
 
-## Phased delivery
-
-Building "everything" in one shot produces a shallow product. Each phase ships a usable product increment.
-
-### Phase 1 — Foundation, profiles, browse & book (no payment, no video yet)
-
-**Auth & accounts**
-- Email/password + Google sign-in (Lovable Cloud).
-- On signup: pick role (Candidate / Apply as Interviewer).
-- Candidate profile: name, target role, target companies, experience level, skills, resume upload (PDF).
-- Interviewer profile: company, role, years of experience, expertise tags (DSA, System Design, Frontend, Backend, ML, PM, HR, Behavioral), LinkedIn URL, short bio, hourly rate.
-
-**Browse interviewers**
-- Filter by interview type, company tier, experience, price.
-- Strict matching rule: candidates targeting product roles only see interviewers from product companies (admin-tagged on company list).
-- Interviewer card shows: name, photo, company + role, verified badge, rating, price, availability snippet.
-
-**Booking**
-- Interviewer profile page with weekly availability calendar (interviewer sets recurring slots + blocks).
-- Candidate picks a slot → selects interview type → confirms.
-- Booking states: `pending_confirmation` → `confirmed` (interviewer accepts and pastes meeting link) → `completed` / `cancelled` / `no_show`.
-- Reschedule and cancel flows with policy (e.g. free cancel >24h before).
-- Email notifications at each state change (Resend).
-
-**Pages in Phase 1**
-- Landing
-- Sign in / Sign up
-- Browse interviewers
-- Interviewer public profile
-- Candidate dashboard (upcoming, past, resume)
-- Interviewer dashboard (requests, upcoming, availability editor, profile)
-- Booking detail page (with meeting link once confirmed)
-
-### Phase 2 — Feedback, ratings & reality check dashboard
-
-- After a booking is `completed`, interviewer is prompted to submit feedback:
-  - Technical rating (1–5)
-  - Communication rating (1–5)
-  - **Hire / No Hire / Lean Hire / Lean No Hire** verdict
-  - Strengths (free text)
-  - Improvements (free text)
-  - Optional private notes (admin-only)
-- Candidate sees feedback on their dashboard once submitted.
-- Candidate rates the interviewer (1–5 + short comment) — average shown on interviewer card.
-- **Reality Check Dashboard** for candidates: chart of technical & communication scores over time, hire-rate %, strengths/weakness tag cloud aggregated from feedback.
-
-### Phase 3 — Resume review (real humans)
-
-- Candidate uploads resume + target role + JD link, pays for a review (added in Phase 5; until then free for testing).
-- Reviewer queue visible to interviewers who opted in for resume reviews.
-- Reviewer submits structured feedback: weak points, suggested rewrites per section, real hiring perspective, overall verdict (interview-worthy / needs work / reject).
-- Candidate sees review with annotated sections.
-
-### Phase 4 — Admin panel & verification
-
-- Admin role gated via `user_roles` table + `has_role()` SECURITY DEFINER function (never on profiles table).
-- Verification queue: pending interviewer applications with LinkedIn URL, claimed company/role, optional proof upload. Admin approves/rejects with note. Approved → `verified` badge on profile.
-- Company directory: admin tags companies as `product_based` / `service_based` / `startup` for the matching rule.
-- Users list with search, ban, force-logout.
-- Booking monitor: flag no-shows, disputes.
-- Quality monitor: list interviewers with avg rating < 3.5 or high cancellation rate.
-- Referral abuse review queue (Phase 6).
-
-### Phase 5 — Payments
-
-- Stripe (recommend tool will confirm) seamless integration.
-- Dynamic price per interviewer (set on their profile, validated min/max).
-- Candidate pays at booking confirmation; held until interview completes.
-- Interviewer payout ledger (no automated payout in v1 — admin marks paid).
-- Refund policy on cancellation per the rules in Phase 1.
-- Resume review purchasable as a one-off.
-
-### Phase 6 — Referral system (smart, anti-abuse)
-
-- Every user gets a unique referral code + link.
-- **Candidate referral:** referrer earns reward only after referee's **first paid booking completes**.
-- **Interviewer referral:** referrer earns reward only after referee is **verified AND completes first interview**.
-- Reward types: wallet credit, % discount on next booking, free resume review at N referrals.
-- Wallet system: credits applied at checkout (max % of order configurable).
-- **Anti-abuse rules enforced server-side:**
-  - Reward only after the qualifying transaction lands.
-  - Max N successful referrals per referrer per month (configurable, default 5).
-  - Block self-referral (same email domain + name fuzzy match + same IP/device fingerprint).
-  - Auto-flag suspicious patterns (>3 referees from same IP, sequential emails) → admin review queue.
-- Referral dashboard for users: total referrals, pending, converted, rewards earned, rewards available.
-
-### Phase 7 — Built-in video (deferred, optional)
-
-You chose external links for v1, which is the right call. We can layer in Daily.co or 100ms later behind the same booking flow without changing the data model — the `meeting_link` field just becomes auto-generated. Not building this now.
+-- helper view for interviewer rating aggregate (avg + count)
+CREATE OR REPLACE VIEW public.interviewer_ratings AS
+  SELECT reviewee_id AS interviewer_id,
+         round(avg(rating)::numeric, 2) AS avg_rating,
+         count(*)::int AS review_count
+  FROM public.reviews GROUP BY reviewee_id;
+```
 
 ---
 
-## Key product rules (enforced, not just shown)
+## 2. Dyte Video Integration
 
-- **No peer interviews:** server validates that interviewer's experience level ≥ candidate's target level + buffer. Booking blocked otherwise with a clear message.
-- **Product → product matching:** if candidate's target companies are tagged product-based, only product-based interviewers appear in browse and can be booked.
-- **Verified-only:** unverified interviewers don't appear in browse and can't accept bookings.
+**Secrets to add (will request via add_secret):** `DYTE_ORG_ID`, `DYTE_API_KEY`.
+
+**Flow:**
+
+```text
+candidate books → bookings row created (status=pending_confirmation)
+                   ↓
+interviewer confirms → server fn createDyteMeeting()
+                   ↓                         (POST /v2/meetings)
+              dyte_meeting_id stored, status=confirmed
+                   ↓
+user clicks "Join" → server fn getDyteToken({booking_id})
+                   ↓  validates: is participant + within join window
+                       (start - 5min)  ≤ now ≤  (start + 10min)
+                   ↓  POST /v2/meetings/{id}/participants
+                   ↓  records candidate_joined_at / interviewer_joined_at
+              returns auth token
+                   ↓
+client renders <DyteMeeting/> from @dyte-in/react-ui-kit
+                   ↓
+on "left" event or end_at reached → mark completed
+```
+
+**Files:**
+- `src/server/dyte.server.ts` — wraps Dyte REST: `createMeeting()`, `addParticipant()` (Basic auth: `base64(DYTE_ORG_ID:DYTE_API_KEY)`).
+- `src/server/dyte.functions.ts` — three `createServerFn`s, all `requireSupabaseAuth` middleware:
+  - `createMeetingForBooking({ bookingId })` — interviewer-only, on confirm.
+  - `getJoinToken({ bookingId })` — checks role, time window, payment_status; returns `{ authToken, meetingId }`.
+  - `markJoined({ bookingId })` — stamps joined_at.
+- `src/routes/_authed/booking.$id.tsx` — replace meeting-link UI with **"Join meeting"** button → opens `/_authed/meeting.$id.tsx`.
+- `src/routes/_authed/meeting.$id.tsx` — full-screen Dyte UI kit. Auto-end on `end_at`. Refresh re-fetches token (rejoin works).
+
+**Packages:** `@dytesdk/react-web-core`, `@dytesdk/react-ui-kit`.
 
 ---
 
-## Tech notes (for the technical reader)
+## 3. Razorpay Payments (BYOK)
 
-- TanStack Start (already scaffolded), Tailwind v4, shadcn/ui.
-- Lovable Cloud (Supabase) for DB/auth/storage. Resume PDFs in a private storage bucket; signed URLs.
-- Roles via a separate `user_roles` table with `app_role` enum (`candidate`, `interviewer`, `admin`) and a `has_role()` SECURITY DEFINER function. RLS on every table.
-- Server functions (`createServerFn` + `requireSupabaseAuth`) for booking creation, slot conflict checks, feedback submission, referral attribution, payment intents, payout ledger writes — never trust client for state transitions or reward grants.
-- Email via Resend (will request `RESEND_API_KEY` when Phase 1 wires notifications).
-- Stripe via Lovable's seamless integration in Phase 5.
-- Routes follow file-based routing under `src/routes/` — separate route per top-level page (landing, browse, interviewers/$id, dashboard/*, admin/*, etc.) so SEO and SSR work properly.
+**Secrets to request:** `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`.
+**Public env (added to .env via build secret):** `VITE_RAZORPAY_KEY_ID`.
+
+**Flow:**
+
+```text
+candidate clicks "Request booking"
+        ↓
+server fn createBookingIntent()
+   - if candidate.free_session_used = false AND price > 0:
+        → mark payment_status = 'free', set free_session_used = true, status=pending_confirmation
+   - else if price = 0:
+        → payment_status = 'free'
+   - else:
+        → create Razorpay order (POST /v1/orders), store razorpay_order_id
+        → return { orderId, keyId, amount }
+        ↓
+client opens Razorpay Checkout (script tag loaded once)
+        ↓ on success → server fn verifyPayment({ orderId, paymentId, signature })
+   - HMAC-SHA256(orderId|paymentId, KEY_SECRET) === signature
+   - update payment_status='paid', razorpay_payment_id
+        ↓
+booking visible to interviewer for confirm
+```
+
+**Webhook:** `src/routes/api/public/webhooks/razorpay.ts` — verifies `x-razorpay-signature`, handles `payment.captured` / `payment.failed` as a fallback to client verify.
+
+**Refunds (admin button on `/admin`):** server fn `refundBooking({ bookingId, reason })` → POST `/v1/payments/{id}/refund` → set `payment_status='refunded'`. Auto-refund hook in no-show cron when interviewer is the no-show.
+
+**Files:**
+- `src/server/razorpay.server.ts` — REST wrapper (Basic auth).
+- `src/server/payments.functions.ts` — `createBookingIntent`, `verifyPayment`, `refundBooking`.
+- `src/components/razorpay-checkout.tsx` — loads `https://checkout.razorpay.com/v1/checkout.js`, opens modal.
+- Update `src/routes/interviewers.$id.tsx` to use new intent flow.
 
 ---
 
-## What I'll build first (Phase 1 deliverable)
+## 4. No-Show & Auto-Status Cron
 
-End of Phase 1 you'll have a working product where:
-- A candidate can sign up, fill profile, upload resume, browse verified interviewers, book a slot.
-- An interviewer can sign up, apply for verification (admin will manually flip a flag for now until Phase 4), set availability, accept a request, paste a meeting link.
-- Both sides see upcoming + past bookings on their dashboard.
-- Landing page in the Warm Professional aesthetic with clear CTAs for both audiences.
+`src/routes/api/public/hooks/booking-tick.ts` (POST, validates `apikey` header against anon key):
 
-Phases 2–6 follow as separate iterations after you confirm Phase 1.
+```text
+every minute:
+  for bookings where status IN ('confirmed','ongoing'):
+    now > end_at                     → status='completed'
+    now > start + 10min AND
+      neither joined                 → status='missed', refund both fully
+    now > start + 10min AND
+      only interviewer not joined    → status='missed', full refund to candidate
+    now > start + 10min AND
+      only candidate not joined      → status='missed', NO refund
+    both joined AND now ≥ start      → status='ongoing'
+```
+
+Scheduled via `pg_cron` + `pg_net` calling the public hook every minute.
+
+---
+
+## 5. Reviews
+
+- `src/components/review-form.tsx` — 1–5 stars + textarea, posts via `submitReview` server fn (validates booking is completed and user was a participant).
+- Show on `/booking/$id` after status=completed, before review exists.
+- Display avg rating + count on `/interviewers/$id` (from `interviewer_ratings` view) and in the `/interviewers` directory cards.
+
+---
+
+## 6. Interviewer Profile Enhancements
+
+`/interviewers/$id` already shows most fields. Add:
+- ⭐ Avg rating + review count (from view).
+- "Total interviews completed" (count from bookings where status=completed).
+- Recent reviews list (last 5, with reviewer first name).
+
+---
+
+## 7. UI Polish
+
+- **Landing (`/`)**: company logos strip (Google, Amazon, Microsoft, Meta, Netflix, Stripe — SVGs inline), static testimonials section (3 cards), "Top Interviewers" section (top 3 by avg_rating).
+- Remove `meeting_link` references everywhere; replace with "Join meeting" button gated by time window.
+
+---
+
+## 8. Security Hardening
+
+- All Dyte/Razorpay calls go through `createServerFn` with `requireSupabaseAuth`; never call from client.
+- `getJoinToken` re-validates: user is participant, payment_status ∈ (paid, free), within join window.
+- Razorpay webhook verifies HMAC signature with `timingSafeEqual`.
+- Reviews RLS: only insert if `EXISTS (booking where status=completed AND user is participant)`.
+
+---
+
+## Technical Layout
+
+```text
+src/
+  server/
+    dyte.server.ts            (REST wrapper)
+    dyte.functions.ts         (createMeeting, getJoinToken, markJoined)
+    razorpay.server.ts
+    payments.functions.ts     (intent, verify, refund)
+    bookings.functions.ts     (submitReview, markCompleted)
+  routes/
+    _authed/
+      meeting.$id.tsx         (NEW — Dyte UI)
+      booking.$id.tsx         (rewrite: Join btn + review form)
+    api/public/
+      hooks/booking-tick.ts   (cron handler)
+      webhooks/razorpay.ts
+  components/
+    razorpay-checkout.tsx
+    review-form.tsx
+    star-rating.tsx
+    company-logos.tsx
+    testimonials.tsx
+```
+
+---
+
+## Execution Order
+
+1. Migration (schema + RLS + view + enum).
+2. Request secrets: Dyte (2), Razorpay (3).
+3. Server: Dyte + Razorpay wrappers + server functions.
+4. Routes: rewrite booking page, add meeting page.
+5. Payment flow on booking request.
+6. Cron hook + pg_cron schedule.
+7. Reviews UI + profile rating display.
+8. Landing page polish.
+
+I'll wait for secrets after step 1 before continuing past step 2.
