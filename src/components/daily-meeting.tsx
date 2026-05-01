@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import DailyIframe, { type DailyCall } from "@daily-co/daily-js";
 
 interface Props {
   url: string;
@@ -9,28 +8,43 @@ interface Props {
 
 export function DailyMeeting({ url, token, onLeft }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const callRef = useRef<DailyCall | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    const call = DailyIframe.createFrame(containerRef.current, {
-      iframeStyle: {
-        width: "100%",
-        height: "100%",
-        border: "0",
-        borderRadius: "0",
-      },
-      showLeaveButton: true,
-      showFullscreenButton: true,
-    });
-    callRef.current = call;
-    call.join({ url, token }).catch((e) => console.error("Daily join error", e));
+    let call: { destroy: () => void; off: (e: string, h: () => void) => void } | null = null;
+    let cancelled = false;
     const handleLeft = () => onLeft?.();
-    call.on("left-meeting", handleLeft);
+
+    (async () => {
+      const mod = await import("@daily-co/daily-js");
+      if (cancelled || !containerRef.current) return;
+      const DailyIframe = mod.default;
+      const frame = DailyIframe.createFrame(containerRef.current, {
+        iframeStyle: {
+          width: "100%",
+          height: "100%",
+          border: "0",
+          borderRadius: "0",
+        },
+        showLeaveButton: true,
+        showFullscreenButton: true,
+      });
+      call = frame as unknown as typeof call;
+      frame.on("left-meeting", handleLeft);
+      try {
+        await frame.join({ url, token });
+      } catch (e) {
+        console.error("Daily join error", e);
+      }
+    })();
+
     return () => {
-      call.off("left-meeting", handleLeft);
-      call.destroy();
-      callRef.current = null;
+      cancelled = true;
+      try {
+        call?.off("left-meeting", handleLeft);
+        call?.destroy();
+      } catch {
+        /* noop */
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, token]);
