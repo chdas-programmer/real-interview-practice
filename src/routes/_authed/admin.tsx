@@ -1,9 +1,11 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { verifyInterviewerApplication } from "@/server/admin.functions";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
@@ -23,17 +25,6 @@ import {
 
 export const Route = createFileRoute("/_authed/admin")({
   head: () => ({ meta: [{ title: "Admin — RealMock" }] }),
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    const uid = data.session?.user.id;
-    if (!uid) throw redirect({ to: "/sign-in", search: { redirect: "/admin" } as never });
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", uid);
-    const isAdmin = (roles ?? []).some((r) => r.role === "admin");
-    if (!isAdmin) throw redirect({ to: "/dashboard" });
-  },
   component: AdminPage,
 });
 
@@ -64,16 +55,19 @@ type BookingRow = {
   candidate_id: string;
   interviewer_id: string;
   meeting_link: string | null;
+  daily_room_url: string | null;
   created_at: string;
 };
 
 function AdminPage() {
-  const { user } = useAuth();
+  const { user, roles: authRoles, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const verifyInterviewerServer = useServerFn(verifyInterviewerApplication);
   const [tab, setTab] = useState("overview");
   const [loading, setLoading] = useState(true);
 
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
-  const [roles, setRoles] = useState<RoleRow[]>([]);
+  const [roleRows, setRoleRows] = useState<RoleRow[]>([]);
   const [interviewers, setInterviewers] = useState<InterviewerRow[]>([]);
   const [bookings, setBookings] = useState<BookingRow[]>([]);
 
@@ -92,7 +86,9 @@ function AdminPage() {
         .order("created_at", { ascending: false }),
       supabase
         .from("bookings")
-        .select("id, status, scheduled_at, interview_type, candidate_id, interviewer_id, meeting_link, created_at")
+        .select(
+          "id, status, scheduled_at, interview_type, candidate_id, interviewer_id, meeting_link, daily_room_url, created_at",
+        )
         .order("created_at", { ascending: false })
         .limit(200),
     ]);
@@ -100,7 +96,7 @@ function AdminPage() {
       toast.error("Failed to load admin data");
     }
     setProfiles((p.data as ProfileRow[]) ?? []);
-    setRoles((r.data as RoleRow[]) ?? []);
+    setRoleRows((r.data as RoleRow[]) ?? []);
     setInterviewers((i.data as InterviewerRow[]) ?? []);
     setBookings((b.data as BookingRow[]) ?? []);
     setLoading(false);
@@ -110,6 +106,16 @@ function AdminPage() {
     loadAll();
   }, []);
 
+  useEffect(() => {
+    if (!authLoading && !authRoles.includes("admin")) {
+      navigate({ to: "/dashboard" });
+    }
+  }, [authLoading, authRoles, navigate]);
+
+  if (authLoading || !authRoles.includes("admin")) {
+    return null;
+  }
+
   const profileById = useMemo(() => {
     const m = new Map<string, ProfileRow>();
     profiles.forEach((p) => m.set(p.id, p));
@@ -118,13 +124,13 @@ function AdminPage() {
 
   const rolesByUser = useMemo(() => {
     const m = new Map<string, string[]>();
-    roles.forEach((r) => {
+    roleRows.forEach((r) => {
       const a = m.get(r.user_id) ?? [];
       a.push(r.role);
       m.set(r.user_id, a);
     });
     return m;
-  }, [roles]);
+  }, [roleRows]);
 
   const stats = useMemo(() => {
     const pending = interviewers.filter((i) => i.verification_status === "pending").length;
@@ -137,7 +143,7 @@ function AdminPage() {
       (b) => b.status === "confirmed" && new Date(b.scheduled_at) > new Date(),
     ).length;
     const noLink = bookings.filter(
-      (b) => b.status === "confirmed" && !b.meeting_link,
+      (b) => b.status === "confirmed" && !b.meeting_link && !b.daily_room_url,
     ).length;
     return { pending, verified, rejected, totalBookings, completed, cancelled, upcoming, noLink };
   }, [interviewers, bookings]);
@@ -155,12 +161,28 @@ function AdminPage() {
 
   const verifyInterviewer = async (status: "verified" | "rejected") => {
     if (!reviewing) return;
-    const { error } = await supabase
-      .from("interviewer_profiles")
-      .update({ verification_status: status, verification_notes: reviewNotes || null })
-      .eq("user_id", reviewing.user_id);
-    if (error) {
-      toast.error(error.message);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not logged in");
+
+      await verifyInterviewerServer({
+        data: {
+          interviewerId: reviewing.user_id,
+          status,
+          notes: reviewNotes || undefined,
+        },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+    } catch (e) {
+      const msg =
+        e instanceof Response
+          ? await e.text().catch(() => e.statusText || "Request failed")
+          : e instanceof Error
+            ? e.message
+            : String(e);
+      toast.error(msg);
       return;
     }
     toast.success(`Interviewer ${status}`);
@@ -384,7 +406,7 @@ function AdminPage() {
                   const cand = profileById.get(b.candidate_id)?.full_name ?? "—";
                   const intv = profileById.get(b.interviewer_id)?.full_name ?? "—";
                   const isPast = new Date(b.scheduled_at) < new Date();
-                  const flagged = b.status === "confirmed" && !b.meeting_link;
+                  const flagged = b.status === "confirmed" && !b.meeting_link && !b.daily_room_url;
                   return (
                     <Link
                       key={b.id}
@@ -409,7 +431,7 @@ function AdminPage() {
                         <StatusBadge status={b.status} />
                       </div>
                       <div className="col-span-2 text-right text-xs">
-                        {b.meeting_link ? (
+                        {b.meeting_link || b.daily_room_url ? (
                           <span className="text-[color:var(--accent-warm)]">✓ set</span>
                         ) : flagged ? (
                           <span className="text-destructive">⚠ missing</span>

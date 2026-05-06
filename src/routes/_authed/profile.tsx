@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import {  Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -64,6 +65,7 @@ function ProfilePage() {
   }, [user]);
 
   const handleSave = async (e: React.FormEvent) => {
+    const navigate = useNavigate();
     e.preventDefault();
     if (!user) return;
     const parsed = schema.safeParse(form);
@@ -92,6 +94,7 @@ function ProfilePage() {
       return;
     }
     toast.success("Profile saved");
+    navigate({ to: "/dashboard" });
   };
 
   const handleResume = async (e: React.ChangeEvent<HTMLInputElement>) => {

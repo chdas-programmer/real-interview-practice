@@ -21,6 +21,7 @@ type Booking = {
   status: string;
   interview_type: string;
   meeting_link: string | null;
+  daily_room_url: string | null;
   candidate_id: string;
   interviewer_id: string;
   other_name?: string;
@@ -60,7 +61,9 @@ function DashboardPage() {
       setLoadingData(true);
       const { data: rows } = await supabase
         .from("bookings")
-        .select("id, scheduled_at, duration_minutes, status, interview_type, meeting_link, candidate_id, interviewer_id")
+        .select(
+          "id, scheduled_at, duration_minutes, status, interview_type, meeting_link, daily_room_url, candidate_id, interviewer_id",
+        )
         .order("scheduled_at", { ascending: false });
 
       const otherIds = Array.from(
@@ -188,9 +191,17 @@ function BookingRow({ b }: { b: Booking }) {
         </div>
       </div>
       <div className="flex gap-2">
-        {b.status === "confirmed" && b.meeting_link && (
+        {b.status === "confirmed" && (b.daily_room_url || b.meeting_link) && (
           <Button asChild size="sm" className="rounded-full bg-[color:var(--accent-warm)] text-[color:var(--accent-warm-foreground)] hover:bg-[color:var(--accent-warm)]/90">
-            <a href={b.meeting_link} target="_blank" rel="noreferrer">Join</a>
+            {b.daily_room_url ? (
+              <Link to="/meeting/$id" params={{ id: b.id }}>
+                Join
+              </Link>
+            ) : (
+              <a href={b.meeting_link!} target="_blank" rel="noreferrer">
+                Join
+              </a>
+            )}
           </Button>
         )}
         <Button asChild size="sm" variant="outline" className="rounded-full">

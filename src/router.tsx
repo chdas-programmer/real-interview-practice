@@ -54,10 +54,18 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
   );
 }
 
+export type RouterContext = {
+  request: Request;
+  responseHeaders: Headers;
+};
+
 export const getRouter = () => {
   const router = createRouter({
     routeTree,
-    context: {},
+   context: {
+      request: undefined!,
+      responseHeaders: undefined!,
+    } as RouterContext,
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
     defaultErrorComponent: DefaultErrorComponent,

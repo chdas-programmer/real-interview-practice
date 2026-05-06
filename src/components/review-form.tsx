@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
 import { submitReview } from "@/server/bookings.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,11 +21,25 @@ export function ReviewForm({ bookingId, onDone }: { bookingId: string; onDone?: 
     }
     setBusy(true);
     try {
-      await submit({ data: { bookingId, rating, feedback: feedback || undefined } });
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not logged in");
+
+      await submit({
+        data: { bookingId, rating, feedback: feedback || undefined },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
       toast.success("Review submitted");
       onDone?.();
     } catch (e) {
-      toast.error((e as Error).message);
+      const msg =
+        e instanceof Response
+          ? await e.text().catch(() => e.statusText || "Request failed")
+          : e instanceof Error
+            ? e.message
+            : String(e);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }

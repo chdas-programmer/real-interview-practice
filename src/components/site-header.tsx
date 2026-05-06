@@ -9,9 +9,11 @@ export function SiteHeader() {
   return (
     <header className="border-b border-border/70 bg-background/80 backdrop-blur sticky top-0 z-30">
       <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="font-serif text-xl font-bold tracking-tight">
+        {user?<Link to="/dashboard" className="font-serif text-xl font-bold tracking-tight">
           RealMock<span className="text-[color:var(--accent-warm)]">.</span>
-        </Link>
+        </Link>:<Link to="/" className="font-serif text-xl font-bold tracking-tight">
+          RealMock<span className="text-[color:var(--accent-warm)]">.</span>
+        </Link>}
         <nav className="hidden md:flex items-center gap-7 text-sm text-[color:var(--ink-soft)]">
           <Link to="/interviewers" className="hover:text-foreground transition-colors">
             Interviewers
@@ -19,9 +21,9 @@ export function SiteHeader() {
           <Link to="/how-it-works" className="hover:text-foreground transition-colors">
             How it works
           </Link>
-          <Link to="/become-interviewer" className="hover:text-foreground transition-colors">
+          {!user && <Link to="/become-interviewer" className="hover:text-foreground transition-colors">
             Become an interviewer
-          </Link>
+          </Link>}
         </nav>
         <div className="flex items-center gap-2">
           {user ? (

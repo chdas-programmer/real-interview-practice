@@ -20,31 +20,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadRoles = async (uid: string | undefined) => {
-    if (!uid) {
-      setRoles([]);
-      return;
-    }
+ const loadRoles = async (uid: string | undefined) => {
+  if (!uid) { setRoles([]); return; }
+  try {
     const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid);
-    setRoles((data?.map((r) => r.role as AppRole)) ?? []);
-  };
+    setRoles(data?.map((r) => r.role as AppRole) ?? []);
+  } catch {
+    setRoles([]); // fail open — don't leave loading stuck
+  }
+};
 
   useEffect(() => {
-    // Set up listener FIRST
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      // defer to avoid deadlocks
-      setTimeout(() => loadRoles(s?.user?.id), 0);
-    });
+  let lastUserId: string | undefined;
 
-    // THEN check existing session
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      loadRoles(data.session?.user?.id).finally(() => setLoading(false));
-    });
+  const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+    setSession(s);
 
-    return () => sub.subscription.unsubscribe();
-  }, []);
+    const newUserId = s?.user?.id;
+
+    // Only fetch if user actually changed
+    if (newUserId && newUserId !== lastUserId) {
+      lastUserId = newUserId;
+      loadRoles(newUserId);
+    }
+
+    if (!newUserId) {
+      lastUserId = undefined;
+      setRoles([]);
+    }
+  });
+
+  // After (fixed)
+supabase.auth.getSession().then(async ({ data }) => {
+  const uid = data.session?.user?.id;
+  setSession(data.session);
+  if (uid) {
+    lastUserId = uid;
+    await loadRoles(uid); // ← wait for roles before continuing
+  }
+  setLoading(false); // ← now safe, user + roles are both ready
+});
+
+  return () => sub.subscription.unsubscribe();
+}, []);
 
   const value: AuthCtx = {
     user: session?.user ?? null,

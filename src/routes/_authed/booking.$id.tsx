@@ -77,7 +77,16 @@ function BookingDetail() {
   const pay = async () => {
     setBusy(true);
     try {
-      const intent = await createIntent({ data: { bookingId: id } });
+      // ✅ ADD THESE 2 LINES
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not logged in");
+
+      const intent = await createIntent({ 
+        data: { bookingId: id },
+        headers: { Authorization: `Bearer ${session.access_token}` }, // ✅ ADD THIS
+      });
+
+      console.log(intent)
       if (intent.kind === "free" || intent.kind === "already") {
         toast.success(intent.kind === "free" ? "Free session booked" : "Already paid");
         await load();
@@ -105,6 +114,7 @@ function BookingDetail() {
                 paymentId: r.razorpay_payment_id,
                 signature: r.razorpay_signature,
               },
+              headers: { Authorization: `Bearer ${session.access_token}` }, // ✅ ADD HERE TOO
             });
             toast.success("Payment confirmed");
             load();
@@ -124,7 +134,13 @@ function BookingDetail() {
   const confirm = async () => {
     setBusy(true);
     try {
-      await createMeeting({ data: { bookingId: id } });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not logged in");
+
+      await createMeeting({ 
+        data: { bookingId: id },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
       toast.success("Booking confirmed — meeting room ready");
       load();
     } catch (e) {

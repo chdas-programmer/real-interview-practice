@@ -1,15 +1,22 @@
+// src/routes/_authed.tsx
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { getServerSession } from "@/lib/auth-server";
 
 export const Route = createFileRoute("/_authed")({
   beforeLoad: async ({ location }) => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) {
+    console.log("[_authed] checking auth...");
+
+    const session = await getServerSession();
+
+    if (!session?.user) {
+      console.log("[_authed] no session → redirecting");
       throw redirect({
         to: "/sign-in",
         search: { redirect: location.href } as never,
       });
     }
+
+    console.log("[_authed] ✅ confirmed →", session.user.email);
   },
   component: () => <Outlet />,
 });

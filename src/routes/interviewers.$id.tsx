@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { SiteHeader } from "@/components/site-header";
@@ -13,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShieldCheck } from "lucide-react";
 import { StarRating } from "@/components/star-rating";
+import { createBookingRequest } from "@/server/bookings.functions";
 
 export const Route = createFileRoute("/interviewers/$id")({
   head: () => ({ meta: [{ title: "Interviewer profile — RealMock" }] }),
@@ -26,6 +28,7 @@ function InterviewerDetail() {
   const { id } = Route.useParams();
   const { user, roles } = useAuth();
   const navigate = useNavigate();
+  const createBooking = useServerFn(createBookingRequest);
   const [profile, setProfile] = useState<any | null>(null);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [pickedSlot, setPickedSlot] = useState<string | null>(null);
@@ -72,6 +75,10 @@ function InterviewerDetail() {
       navigate({ to: "/sign-in" });
       return;
     }
+    if (user.id === id) {
+      toast.error("You cannot book yourself");
+      return;
+    }
     if (!roles.includes("candidate")) {
       toast.error("Only candidate accounts can book");
       return;
@@ -82,30 +89,43 @@ function InterviewerDetail() {
     }
     const slot = slots.find((s) => s.id === pickedSlot);
     if (!slot) return;
-    const duration = Math.round((new Date(slot.end_at).getTime() - new Date(slot.start_at).getTime()) / 60000);
     setBooking(true);
-    const { data, error } = await supabase.from("bookings").insert({
-      candidate_id: user.id,
-      interviewer_id: id,
-      slot_id: slot.id,
-      interview_type: type as never,
-      scheduled_at: slot.start_at,
-      end_at: slot.end_at,
-      duration_minutes: duration,
-      candidate_notes: notes || null,
-      price_cents: Math.round((profile?.hourly_rate ?? 0) * (duration / 60)),
-    }).select("id").single();
+    let createdId: string | null = null;
+    let errorMessage: string | null = null;
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not logged in");
 
-    if (!error) {
-      await supabase.from("availability_slots").update({ is_booked: true }).eq("id", slot.id);
+      const res = await createBooking({
+        data: {
+          interviewerId: id,
+          slotId: slot.id,
+          interviewType: type as
+            | "dsa"
+            | "system_design"
+            | "frontend"
+            | "backend"
+            | "ml"
+            | "behavioral"
+            | "hr"
+            | "pm",
+          notes: notes || undefined,
+        },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      createdId = res.id;
+    } catch (e) {
+      errorMessage = (e as Error).message;
     }
     setBooking(false);
-    if (error) {
-      toast.error(error.message);
+    if (errorMessage || !createdId) {
+      toast.error(errorMessage ?? "Failed to create booking");
       return;
     }
     toast.success("Booking requested");
-    navigate({ to: "/booking/$id", params: { id: data!.id } });
+    navigate({ to: "/booking/$id", params: { id: createdId } });
   };
 
   if (!profile) {
@@ -202,11 +222,15 @@ function InterviewerDetail() {
               <label className="text-xs uppercase tracking-wider text-[color:var(--ink-soft)]">Notes (optional)</label>
               <Textarea placeholder="What you want to focus on" value={notes} onChange={(e) => setNotes(e.target.value)} className="mt-1.5" maxLength={500} />
             </div>
-            <Button onClick={book} disabled={booking || slots.length === 0} className="mt-5 w-full rounded-full h-11 bg-[color:var(--accent-warm)] text-[color:var(--accent-warm-foreground)] hover:bg-[color:var(--accent-warm)]/90">
-              {booking ? "Requesting…" : "Request booking"}
+            <Button onClick={book} disabled={booking || slots.length === 0 || user?.id === id} className="mt-5 w-full rounded-full h-11 bg-[color:var(--accent-warm)] text-[color:var(--accent-warm-foreground)] hover:bg-[color:var(--accent-warm)]/90">
+              {booking ? "Requesting…" : user?.id === id ? "Cannot book yourself" : "Request booking"}
             </Button>
             <p className="mt-3 text-xs text-[color:var(--ink-soft)] text-center">
-              {user ? "You'll get a confirmation when they accept." : <Link to="/sign-in" className="underline">Sign in to book</Link>}
+              {user
+                ? user.id === id
+                  ? "Switch to another account to test this interviewer profile."
+                  : "You'll get a confirmation when they accept."
+                : <Link to="/sign-in" className="underline">Sign in to book</Link>}
             </p>
           </Card>
         </div>

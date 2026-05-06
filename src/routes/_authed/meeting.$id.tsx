@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getJoinToken } from "@/server/daily.functions";
 import { DailyMeeting } from "@/components/daily-meeting";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authed/meeting/$id")({
   head: () => ({ meta: [{ title: "Live interview — RealMock" }] }),
@@ -23,15 +24,21 @@ function MeetingPage() {
 
   useEffect(() => {
     let mounted = true;
-    join({ data: { bookingId: id } })
-      .then((res) => {
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession(); // ✅
+        if (!session) throw new Error("Not logged in");                  // ✅
+        const res = await join({ 
+          data: { bookingId: id },
+          headers: { Authorization: `Bearer ${session.access_token}` }, // ✅
+        });
         if (!mounted) return;
         setState({ status: "ready", url: res.url, token: res.token });
-      })
-      .catch((e: Error) => {
+      } catch (e) {
         if (!mounted) return;
-        setState({ status: "error", message: e.message });
-      });
+        setState({ status: "error", message: (e as Error).message });
+      }
+    })();
     return () => {
       mounted = false;
     };

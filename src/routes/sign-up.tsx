@@ -85,7 +85,7 @@ function SignUpPage() {
           <h1 className="font-serif text-4xl font-bold">Get judged.</h1>
           <p className="mt-2 text-[color:var(--ink-soft)]">Before companies do.</p>
 
-          <Button
+          {/* <Button
             onClick={handleGoogle}
             variant="outline"
             className="w-full rounded-full mt-8 h-11"
@@ -94,7 +94,7 @@ function SignUpPage() {
           </Button>
           <div className="my-6 flex items-center gap-3 text-xs text-[color:var(--ink-soft)]">
             <div className="flex-1 h-px bg-border" /> OR <div className="flex-1 h-px bg-border" />
-          </div>
+          </div> */}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
