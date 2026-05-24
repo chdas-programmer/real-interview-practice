@@ -145,7 +145,7 @@ function InterviewerCard({ i }: { i: Interviewer }) {
       {i.bio && <p className="text-sm text-[color:var(--ink-soft)] line-clamp-3">{i.bio}</p>}
       <div className="flex items-center justify-between mt-auto">
         <div>
-          <div className="font-serif text-xl font-bold">${(i.hourly_rate / 100).toFixed(0)}<span className="text-sm font-sans font-normal text-[color:var(--ink-soft)]">/hr</span></div>
+          <div className="font-serif text-xl font-bold">₹{(i.hourly_rate).toFixed(0)}<span className="text-sm font-sans font-normal text-[color:var(--ink-soft)]">/hr</span></div>
           <div className="text-xs text-[color:var(--ink-soft)]">{i.years_experience}+ yrs experience</div>
         </div>
         <Button asChild size="sm" className="rounded-full bg-[color:var(--accent-warm)] text-[color:var(--accent-warm-foreground)] hover:bg-[color:var(--accent-warm)]/90">

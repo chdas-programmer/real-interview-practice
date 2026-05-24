@@ -119,6 +119,11 @@ function DashboardPage() {
                 <Link to="/interviewer/setup">Apply as interviewer</Link>
               </Button>
             )}
+            {isInterviewer && !isCandidate && (
+              <Button asChild variant="ghost" className="rounded-full">
+                <Link to="/candidate/setup">Apply as Candidate</Link>
+              </Button>
+            )}
           </div>
         </div>
 

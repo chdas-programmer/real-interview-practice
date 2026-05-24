@@ -215,7 +215,7 @@ function BookingDetail() {
           <Card className="mt-6 p-6">
             <h2 className="font-serif text-xl font-bold">Complete payment</h2>
             <p className="text-sm text-[color:var(--ink-soft)] mt-1">
-              ₹{(b.price_cents / 100).toFixed(0)} · Your first session may be free.
+              ₹{(b.price_cents).toFixed(0)} · Your first session may be free.
             </p>
             <Button
               onClick={pay}

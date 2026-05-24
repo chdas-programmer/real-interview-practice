@@ -23,6 +23,7 @@ import { Route as AuthedAdminRouteImport } from './routes/_authed/admin'
 import { Route as AuthedInterviewerIndexRouteImport } from './routes/_authed/interviewer.index'
 import { Route as AuthedMeetingIdRouteImport } from './routes/_authed/meeting.$id'
 import { Route as AuthedInterviewerSetupRouteImport } from './routes/_authed/interviewer.setup'
+import { Route as AuthedCandidateSetupRouteImport } from './routes/_authed/candidate.setup'
 import { Route as AuthedBookingIdRouteImport } from './routes/_authed/booking.$id'
 import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/public/webhooks/razorpay'
 import { Route as ApiPublicHooksBookingTickRouteImport } from './routes/api/public/hooks/booking-tick'
@@ -96,6 +97,11 @@ const AuthedInterviewerSetupRoute = AuthedInterviewerSetupRouteImport.update({
   path: '/interviewer/setup',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedCandidateSetupRoute = AuthedCandidateSetupRouteImport.update({
+  id: '/candidate/setup',
+  path: '/candidate/setup',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedBookingIdRoute = AuthedBookingIdRouteImport.update({
   id: '/booking/$id',
   path: '/booking/$id',
@@ -126,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/interviewers/$id': typeof InterviewersIdRoute
   '/interviewers/': typeof InterviewersIndexRoute
   '/booking/$id': typeof AuthedBookingIdRoute
+  '/candidate/setup': typeof AuthedCandidateSetupRoute
   '/interviewer/setup': typeof AuthedInterviewerSetupRoute
   '/meeting/$id': typeof AuthedMeetingIdRoute
   '/interviewer/': typeof AuthedInterviewerIndexRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/interviewers/$id': typeof InterviewersIdRoute
   '/interviewers': typeof InterviewersIndexRoute
   '/booking/$id': typeof AuthedBookingIdRoute
+  '/candidate/setup': typeof AuthedCandidateSetupRoute
   '/interviewer/setup': typeof AuthedInterviewerSetupRoute
   '/meeting/$id': typeof AuthedMeetingIdRoute
   '/interviewer': typeof AuthedInterviewerIndexRoute
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/interviewers/$id': typeof InterviewersIdRoute
   '/interviewers/': typeof InterviewersIndexRoute
   '/_authed/booking/$id': typeof AuthedBookingIdRoute
+  '/_authed/candidate/setup': typeof AuthedCandidateSetupRoute
   '/_authed/interviewer/setup': typeof AuthedInterviewerSetupRoute
   '/_authed/meeting/$id': typeof AuthedMeetingIdRoute
   '/_authed/interviewer/': typeof AuthedInterviewerIndexRoute
@@ -184,6 +193,7 @@ export interface FileRouteTypes {
     | '/interviewers/$id'
     | '/interviewers/'
     | '/booking/$id'
+    | '/candidate/setup'
     | '/interviewer/setup'
     | '/meeting/$id'
     | '/interviewer/'
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
     | '/interviewers/$id'
     | '/interviewers'
     | '/booking/$id'
+    | '/candidate/setup'
     | '/interviewer/setup'
     | '/meeting/$id'
     | '/interviewer'
@@ -221,6 +232,7 @@ export interface FileRouteTypes {
     | '/interviewers/$id'
     | '/interviewers/'
     | '/_authed/booking/$id'
+    | '/_authed/candidate/setup'
     | '/_authed/interviewer/setup'
     | '/_authed/meeting/$id'
     | '/_authed/interviewer/'
@@ -341,6 +353,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedInterviewerSetupRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/candidate/setup': {
+      id: '/_authed/candidate/setup'
+      path: '/candidate/setup'
+      fullPath: '/candidate/setup'
+      preLoaderRoute: typeof AuthedCandidateSetupRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/booking/$id': {
       id: '/_authed/booking/$id'
       path: '/booking/$id'
@@ -370,6 +389,7 @@ interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedProfileRoute: typeof AuthedProfileRoute
   AuthedBookingIdRoute: typeof AuthedBookingIdRoute
+  AuthedCandidateSetupRoute: typeof AuthedCandidateSetupRoute
   AuthedInterviewerSetupRoute: typeof AuthedInterviewerSetupRoute
   AuthedMeetingIdRoute: typeof AuthedMeetingIdRoute
   AuthedInterviewerIndexRoute: typeof AuthedInterviewerIndexRoute
@@ -380,6 +400,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedProfileRoute: AuthedProfileRoute,
   AuthedBookingIdRoute: AuthedBookingIdRoute,
+  AuthedCandidateSetupRoute: AuthedCandidateSetupRoute,
   AuthedInterviewerSetupRoute: AuthedInterviewerSetupRoute,
   AuthedMeetingIdRoute: AuthedMeetingIdRoute,
   AuthedInterviewerIndexRoute: AuthedInterviewerIndexRoute,

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/lib/supabase-admin"; // ✅ add this
 
 const verifyInterviewerSchema = z.object({
   interviewerId: z.string().uuid(),
@@ -12,9 +13,10 @@ export const verifyInterviewerApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => verifyInterviewerSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { userId, supabase } = context;
+    const { userId } = context;
 
-    const { data: roles } = await supabase
+    // ✅ Use admin client — bypasses RLS, no has_role() conflict
+    const { data: roles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
@@ -24,7 +26,8 @@ export const verifyInterviewerApplication = createServerFn({ method: "POST" })
       throw new Error("Admin only");
     }
 
-    const { error } = await supabase
+    // ✅ Also use admin client here so the UPDATE isn't blocked by RLS
+    const { error } = await supabaseAdmin
       .from("interviewer_profiles")
       .update({
         verification_status: data.status,
@@ -38,4 +41,3 @@ export const verifyInterviewerApplication = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
-

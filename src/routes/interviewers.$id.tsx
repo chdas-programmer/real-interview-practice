@@ -190,7 +190,7 @@ function InterviewerDetail() {
 
 
           <Card className="p-6 h-fit lg:sticky lg:top-24">
-            <div className="font-serif text-2xl font-bold">${(profile.hourly_rate / 100).toFixed(0)}<span className="text-sm font-sans font-normal text-[color:var(--ink-soft)]">/hr</span></div>
+            <div className="font-serif text-2xl font-bold">₹{(profile.hourly_rate).toFixed(0)}<span className="text-sm font-sans font-normal text-[color:var(--ink-soft)]">/hr</span></div>
             <div className="mt-5">
               <label className="text-xs uppercase tracking-wider text-[color:var(--ink-soft)]">Interview type</label>
               <Select value={type} onValueChange={setType}>

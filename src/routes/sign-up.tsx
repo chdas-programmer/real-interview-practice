@@ -61,7 +61,11 @@ function SignUpPage() {
     }
     toast.success("Account created");
     navigate({
-      to: parsed.data.role === "interviewer" ? "/interviewer/setup" : "/dashboard",
+      to: parsed.data.role === "interviewer"
+  ? "/interviewer/setup"
+  : parsed.data.role === "candidate"
+    ? "/candidate/setup"
+    : "/dashboard",
     });
   };
 

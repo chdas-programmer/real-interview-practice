@@ -162,9 +162,7 @@ function AdminPage() {
   const verifyInterviewer = async (status: "verified" | "rejected") => {
     if (!reviewing) return;
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session }} = await supabase.auth.getSession();
       if (!session) throw new Error("Not logged in");
 
       await verifyInterviewerServer({
@@ -182,6 +180,7 @@ function AdminPage() {
           : e instanceof Error
             ? e.message
             : String(e);
+      console.log(msg);
       toast.error(msg);
       return;
     }
